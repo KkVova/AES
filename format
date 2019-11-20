@@ -1,0 +1,2 @@
+#!/bin/bash
+find . -path ./googletest -prune -o -regex '.*\.\(cpp\|hpp\|c\|h\|cc\|cxx\)' -exec clang-format -style=file -i {} \;
