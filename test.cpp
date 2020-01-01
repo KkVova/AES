@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include <aes.h>
-#include <helper.h>
+#include <aes/aes.h>
+#include <helper/helper.h>
 
 #include <gtest/gtest.h>
 

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <helper.h>
+#include "helper.h"
 
 uint4_t gmul(uint4_t a, uint4_t b) {
     uint4_t p = 0;

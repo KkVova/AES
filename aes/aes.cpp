@@ -4,10 +4,10 @@
 #include <iostream>
 #include <typeinfo>
 
+#include "aes.h"
+#include "precompute.h"
 #include <Timer/timer.h>
-#include <aes.h>
-#include <helper.h>
-#include <precompute.h>
+#include <helper/helper.h>
 
 template class AES<uint4_t>;
 template class AES<uint8_t>;
