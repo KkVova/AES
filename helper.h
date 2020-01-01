@@ -25,6 +25,14 @@ class uint4_t {
         value[3] = (input >> (3 + offset)) & 1;
     }
 
+    //    uint4_t(uint32_t input) {
+    //        value.resize(4);
+    //        value[0] = input & 1;
+    //        value[1] = (input >> 1) & 1;
+    //        value[2] = (input >> 2) & 1;
+    //        value[3] = (input >> 3) & 1;
+    //    }
+
     std::vector<bool> get() const { return value; }
 
     ////////////////////////////////////////////////////////////
@@ -119,4 +127,4 @@ uint8_t gmul(uint8_t a, uint8_t b);
 
 uint4_t gmul(uint4_t a, uint4_t b);
 
-#endif // AES_H
+#endif // HELPER_H
