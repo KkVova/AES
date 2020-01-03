@@ -147,10 +147,10 @@ void AES<TYPE>::Encrypt(const vector<TYPE> &data, vector<TYPE> &key, vector<TYPE
                         const int &numberOfRounds, bool fast) {
     isFast = fast;
     if ((data.size() != 9 && data.size() != 16) || (key.size() != 9 && key.size() != 16))
-        throw("Block length is invalid");
+        assert("Block length is invalid");
 
     if (data.size() != key.size())
-        throw("Length of data isn't equal length of key");
+        assert("Length of data isn't equal length of key");
 
     int stateSize = data.size();
     vector<TYPE> keySchedule;
@@ -188,10 +188,10 @@ void AES<TYPE>::Decrypt(const vector<TYPE> &encryptedData, vector<TYPE> &key, ve
     isFast = fast;
     if ((encryptedData.size() != 9 && encryptedData.size() != 16) ||
         (key.size() != 9 && key.size() != 16))
-        throw("Block length is invalid");
+        assert("Block length is invalid");
 
     if (encryptedData.size() != key.size())
-        throw("Length of data isn't equal length of key");
+        assert("Length of data isn't equal length of key");
 
     int stateSize = encryptedData.size();
     vector<TYPE> keySchedule;
