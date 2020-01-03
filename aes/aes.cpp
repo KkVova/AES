@@ -9,9 +9,6 @@
 #include <Timer/timer.h>
 #include <helper/helper.h>
 
-template class AES<uint4_t>;
-template class AES<uint8_t>;
-
 namespace {
 
 // Encryption: Forward Rijndael S-box
@@ -71,27 +68,6 @@ vector<TYPE> GetKeyState(vector<TYPE> &keySchedule, const int iteration, int blo
                         keySchedule.begin() + (blockSize * (iteration + 1)));
 }
 } // namespace
-
-template <typename TYPE> void AES<TYPE>::PrintState(vector<TYPE> &state) {
-    if (state.size() == 16) {
-        for (int i = 0; i < 4; ++i) {
-            PRINTHEX(state[i]);
-            PRINTHEX(state[i + 4]);
-            PRINTHEX(state[i + 8]);
-            PRINTHEX(state[i + 12]);
-            std::cout << std::endl;
-        }
-        std::cout << "==================\n";
-    } else if (state.size() == 9) {
-        for (int i = 0; i < 3; ++i) {
-            PRINTHEX(state[i]);
-            PRINTHEX(state[i + 3]);
-            PRINTHEX(state[i + 6]);
-            std::cout << std::endl;
-        }
-        std::cout << "==========\n";
-    }
-}
 
 template <typename TYPE>
 void AES<TYPE>::InitAES(vector<TYPE> &key, vector<TYPE> &keySchedule, bool isEncrypt,
@@ -265,8 +241,8 @@ template <typename TYPE> void AES<TYPE>::SubBytes(vector<TYPE> &state) {
     if (state.size() == 9) {
         if (isFast) {
             for (int i = 0; i < 9; i += 3) {
-                uint32_t aggregateState =
-                    ((uint32_t)state[i] << 8) ^ ((uint32_t)state[i + 1] << 4) ^ (uint32_t)state[i + 2];
+                uint16_t aggregateState =
+                    ((uint16_t)state[i] << 8) ^ ((uint16_t)state[i + 1] << 4) ^ (uint16_t)state[i + 2];
                 aggregateState = precompute_SubBytes[aggregateState];
                 state[i] = uint8_t(aggregateState >> 8);
                 state[i + 1] = uint8_t(aggregateState >> 4);
@@ -289,8 +265,8 @@ template <typename TYPE> void AES<TYPE>::InvSubBytes(vector<TYPE> &state) {
     if (state.size() == 9) {
         if (isFast) {
             for (int i = 0; i < 9; i += 3) {
-                uint32_t aggregateState =
-                    ((uint32_t)state[i] << 8) ^ ((uint32_t)state[i + 1] << 4) ^ (uint32_t)state[i + 2];
+                uint16_t aggregateState =
+                    ((uint16_t)state[i] << 8) ^ ((uint16_t)state[i + 1] << 4) ^ (uint16_t)state[i + 2];
                 aggregateState = precompute_InvSubBytes[aggregateState];
                 state[i] = uint8_t(aggregateState >> 8);
                 state[i + 1] = uint8_t(aggregateState >> 4);
@@ -402,8 +378,8 @@ template <typename TYPE> void AES<TYPE>::MixColumns(vector<TYPE> &state) {
     } else if (state.size() == 9) {
         if (isFast) {
             for (int i = 0; i < 9; i += 3) {
-                uint32_t aggregateState =
-                    ((uint32_t)state[i] << 8) ^ ((uint32_t)state[i + 1] << 4) ^ (uint32_t)state[i + 2];
+                uint16_t aggregateState =
+                    ((uint16_t)state[i] << 8) ^ ((uint16_t)state[i + 1] << 4) ^ (uint16_t)state[i + 2];
                 aggregateState = precompute_MixColumns[aggregateState];
                 state[i] = uint8_t(aggregateState >> 8);
                 state[i + 1] = uint8_t(aggregateState >> 4);
@@ -457,8 +433,8 @@ template <typename TYPE> void AES<TYPE>::InvMixColumns(vector<TYPE> &state) {
     } else if (state.size() == 9) {
         if (isFast) {
             for (int i = 0; i < 9; i += 3) {
-                uint32_t aggregateState =
-                    ((uint32_t)state[i] << 8) ^ ((uint32_t)state[i + 1] << 4) ^ (uint32_t)state[i + 2];
+                uint16_t aggregateState =
+                    ((uint16_t)state[i] << 8) ^ ((uint16_t)state[i + 1] << 4) ^ (uint16_t)state[i + 2];
                 aggregateState = precompute_InvMixColumns[aggregateState];
                 state[i] = uint8_t(aggregateState >> 8);
                 state[i + 1] = uint8_t(aggregateState >> 4);
@@ -680,6 +656,142 @@ template <typename TYPE> bool AES<TYPE>::Test_Direct_And_Precompute_InvSbox(cons
     isFast = true;
     InvSubBytes(state_fast);
     return state == state_fast;
+}
+
+template <typename TYPE> bool AES<TYPE>::Test_Uint16_ShiftRows() {
+    AES<uint4_t> aes;
+    vector<uint4_t> testResult;
+    vector<uint4_t> state;
+    vector<uint4_t> shiftState;
+    vector<uint16_t> state_uint16;
+    vector<uint16_t> shiftState_uint16;
+    for (uint16_t i; i < 0x1000; ++i) {
+        state.push_back((uint8_t)(i >> 8));
+        state.push_back((uint8_t)(i >> 4));
+        state.push_back((uint8_t)i);
+
+        state_uint16.push_back(i);
+        for (uint16_t j; j < 0x1000; ++j) {
+            state.push_back((uint8_t)(j >> 8));
+            state.push_back((uint8_t)(j >> 4));
+            state.push_back((uint8_t)j);
+
+            state_uint16.push_back(j);
+            for (uint16_t k; i < 0x1000; ++k) {
+                state.push_back((uint8_t)(k >> 8));
+                state.push_back((uint8_t)(k >> 4));
+                state.push_back((uint8_t)k);
+
+                state_uint16.push_back(k);
+
+                //---------------------------------------
+                shiftState = state;
+                aes.ShiftRows(shiftState);
+
+                //---------------------------------------
+                shiftState_uint16 = state_uint16;
+                AES<uint4_t>::ShiftRows(shiftState_uint16);
+                //
+                for (int count = 0; count < 2; ++count) {
+                    testResult.push_back((uint8_t)(shiftState_uint16[count] >> 8));
+                    testResult.push_back((uint8_t)(shiftState_uint16[count] >> 4));
+                    testResult.push_back((uint8_t)shiftState_uint16[count]);
+                }
+
+                if (testResult != shiftState)
+                    return false;
+
+                testResult.clear();
+
+                state_uint16 = shiftState_uint16;
+                AES<uint4_t>::InvShiftRows(state_uint16);
+                //
+                for (int count = 0; count < 2; ++count) {
+                    testResult.push_back((uint8_t)(state_uint16[count] >> 8));
+                    testResult.push_back((uint8_t)(state_uint16[count] >> 4));
+                    testResult.push_back((uint8_t)state_uint16[count]);
+                }
+
+                if (testResult != shiftState)
+                    return false;
+            }
+        }
+    }
+
+    for (uint16_t i = 0x0000; i < 0x1000; ++i) {
+        testResult.clear();
+        shiftState_uint16.clear();
+        state = vector<uint4_t>(6, 0x00);
+
+        state.insert(state.begin(), (uint8_t)i);
+        state.insert(state.begin(), (uint8_t)(i >> 4));
+        state.insert(state.begin(), (uint8_t)(i >> 8));
+        aes.InvShiftRows(state);
+
+        shiftState_uint16 = AES<uint4_t>::InvShiftRows(i);
+
+        for (int count = 0; count < 3; ++count) {
+            testResult.push_back((uint8_t)(shiftState_uint16[count] >> 8));
+            testResult.push_back((uint8_t)(shiftState_uint16[count] >> 4));
+            testResult.push_back((uint8_t)shiftState_uint16[count]);
+        }
+        if (testResult != state)
+            return false;
+    }
+    return true;
+}
+
+template <typename TYPE> bool AES<TYPE>::Test_Differential(const int size) {
+    srand(time(0));
+    {
+        vector<TYPE> first;
+        vector<TYPE> second;
+        vector<TYPE> diff;
+        vector<TYPE> diff_check;
+        for (int i = 0; i < size; ++i) {
+            first.push_back(rand());
+        }
+        for (int i = 0; i < size; ++i) {
+            diff.push_back(rand());
+        }
+        for (int i = 0; i < size; ++i) {
+            second.push_back(first[i] ^ diff[i]);
+        }
+
+        MixColumns(first);
+        MixColumns(second);
+        MixColumns(diff);
+        for (int i = 0; i < size; ++i) {
+            diff_check.push_back(first[i] ^ second[i]);
+        }
+        if (diff != diff_check)
+            return false;
+    }
+    {
+        vector<TYPE> first;
+        vector<TYPE> second;
+        vector<TYPE> diff;
+        vector<TYPE> diff_check;
+        for (int i = 0; i < size; ++i) {
+            first.push_back(rand());
+        }
+        for (int i = 0; i < size; ++i) {
+            diff.push_back(rand());
+        }
+        for (int i = 0; i < size; ++i) {
+            second.push_back(first[i] ^ diff[i]);
+        }
+
+        InvMixColumns(first);
+        InvMixColumns(second);
+        InvMixColumns(diff);
+        for (int i = 0; i < size; ++i) {
+            diff_check.push_back(first[i] ^ second[i]);
+        }
+        if (diff != diff_check)
+            return false;
+    }
+    return true;
 }
 
 template <typename TYPE> void AES<TYPE>::Precompute_MixColumns_And_InvMixColumns(const int size) {
@@ -924,6 +1036,16 @@ TEST(AES, Test_SubBytes_Direct_And_Precompute_3x3_HalfByte) {
     EXPECT_TRUE(aes.Test_Direct_And_Precompute_Sbox(9));
     EXPECT_TRUE(aes.Test_Direct_And_Precompute_InvSbox(9));
 }
+
+TEST(AES, Test_InvShiftRows_uint16_t) {
+    AES<uint4_t> aes;
+    EXPECT_TRUE(aes.Test_Uint16_ShiftRows());
+}
+
+TEST(AES, Test_Differential) {
+    AES<uint4_t> aes;
+    EXPECT_TRUE(aes.Test_Differential(9));
+}
 //-------------------------------------------------
 //      Inversion tests
 //-------------------------------------------------
@@ -949,12 +1071,12 @@ TEST(AES, Test_Inversion_ShiftRows_3x3_HalfByte) {
 
 TEST(AES, Test_Inversion_S_box_4x4_Byte) {
     AES<uint8_t> aes;
-    EXPECT_TRUE(aes.Test_Inversion_ShiftRows(16));
+    EXPECT_TRUE(aes.Test_Inversion_Sbox(16));
 }
 
 TEST(AES, Test_Inversion_S_box_3x3_HalfByte) {
     AES<uint4_t> aes;
-    EXPECT_TRUE(aes.Test_Inversion_ShiftRows(9));
+    EXPECT_TRUE(aes.Test_Inversion_Sbox(9));
 }
 
 // TEST(AES, Positive_Random_4x4_HalfByte) {

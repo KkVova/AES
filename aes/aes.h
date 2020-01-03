@@ -6,10 +6,18 @@
 
 using std::vector;
 
+class DiffWay;
+
 template <typename TYPE> class AES {
+    friend class DiffWay;
+
   public:
     AES() : isFast(false) {}
     ~AES() {}
+
+    void setFast() { isFast = true; }
+
+    void unsetFast() { isFast = false; }
 
     void Encrypt(const vector<TYPE> &data, vector<TYPE> &key, vector<TYPE> &encryptedMessage,
                  const int &numberOfRounds = 10, bool fast = false);
@@ -36,9 +44,14 @@ template <typename TYPE> class AES {
 
     bool Test_Direct_And_Precompute_InvSbox(const int size = 9);
 
+    bool Test_Uint16_ShiftRows();
+
+    bool Test_Differential(const int size = 9);
+
     void Precompute_MixColumns_And_InvMixColumns(const int size = 9);
 
     void Precompute_Sbox_And_InvSbox(const int size = 9);
+
     //===================================================================
   private:
     // parameter defines substitution for MixColumnes and S_box operations
@@ -74,10 +87,44 @@ template <typename TYPE> class AES {
 
     void InvSubBytes(vector<TYPE> &state);
 
-    // Helper functions
+    // Helper function
     uint32_t FindTeta(vector<TYPE> &state);
 
-    void PrintState(vector<TYPE> &state);
+  public:
+    static vector<uint16_t> InvShiftRows(uint16_t state) {
+
+        vector<uint16_t> result;
+        result.push_back(state & 0xF00);
+        result.push_back(state & 0x0F0);
+        result.push_back(state & 0x0F);
+        return result;
+    }
+
+    static void InvShiftRows(vector<uint16_t> &state) {
+        if (state.size() != 3)
+            assert("Block length is invalid");
+
+        vector<uint16_t> tmp = state;
+
+        tmp[0] = (state[0] & 0xF00) ^ (state[2] & 0x0F0) ^ (state[1] & 0x00F);
+        tmp[1] = (state[1] & 0xF00) ^ (state[0] & 0x0F0) ^ (state[2] & 0x00F);
+        tmp[2] = (state[2] & 0xF00) ^ (state[1] & 0x0F0) ^ (state[0] & 0x00F);
+
+        state = tmp;
+    }
+
+    static void ShiftRows(vector<uint16_t> &state) {
+        if (state.size() != 3)
+            assert("Block length is invalid");
+
+        vector<uint16_t> tmp = state;
+
+        tmp[0] = (state[0] & 0xF00) ^ (state[1] & 0x0F0) ^ (state[2] & 0x00F);
+        tmp[1] = (state[1] & 0xF00) ^ (state[2] & 0x0F0) ^ (state[0] & 0x00F);
+        tmp[2] = (state[2] & 0xF00) ^ (state[0] & 0x0F0) ^ (state[1] & 0x00F);
+
+        state = tmp;
+    }
 };
 
 #endif // AES_H

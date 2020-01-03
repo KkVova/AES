@@ -6,7 +6,10 @@
 
 #define PRINTHEX(x)                                                                                     \
     std::cout << std::hex << std::setfill('0')                                                          \
-              << (typeid(x) == typeid(uint8_t) ? std::setw(2) : std::setw(1)) << (uint32_t)x << " | "
+              << (typeid(x) == typeid(uint16_t)                                                         \
+                      ? std::setw(3)                                                                    \
+                      : typeid(x) == typeid(uint8_t) ? std::setw(2) : std::setw(1))                     \
+              << (uint32_t)x << " | "
 
 class uint4_t {
     std::vector<bool> value;
@@ -126,5 +129,37 @@ class uint4_t {
 uint8_t gmul(uint8_t a, uint8_t b);
 
 uint4_t gmul(uint4_t a, uint4_t b);
+
+template <typename TYPE> void PrintState(std::vector<TYPE> &state, bool isString = false) {
+
+    if (isString) {
+        for (int i = 0; i < state.size(); ++i)
+            PRINTHEX(state[i]);
+        return;
+    }
+    if (state.size() == 16) {
+        for (int i = 0; i < 4; ++i) {
+            PRINTHEX(state[i]);
+            PRINTHEX(state[i + 4]);
+            PRINTHEX(state[i + 8]);
+            PRINTHEX(state[i + 12]);
+            std::cout << std::endl;
+        }
+        std::cout << "==================";
+    } else if (state.size() == 9) {
+        for (int i = 0; i < 3; ++i) {
+            PRINTHEX(state[i]);
+            PRINTHEX(state[i + 3]);
+            PRINTHEX(state[i + 6]);
+            std::cout << std::endl;
+        }
+        std::cout << "==========\n";
+    } else if (state.size() == 3) {
+        PRINTHEX(state[0]);
+        PRINTHEX(state[1]);
+        PRINTHEX(state[2]);
+        std::cout << "\n==========\n";
+    }
+}
 
 #endif // HELPER_H

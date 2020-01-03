@@ -1,9 +1,5 @@
-#include <iostream>
-
-#include <aes/aes.h>
-#include <helper/helper.h>
-
 #include <gtest/gtest.h>
+#include <iostream>
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
