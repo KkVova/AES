@@ -101,8 +101,7 @@ template <typename TYPE> class AES {
     }
 
     static void InvShiftRows(vector<uint16_t> &state) {
-        if (state.size() != 3)
-            assert("Block length is invalid");
+        assert(state.size() == 3);
 
         vector<uint16_t> tmp = state;
 
@@ -114,8 +113,7 @@ template <typename TYPE> class AES {
     }
 
     static void ShiftRows(vector<uint16_t> &state) {
-        if (state.size() != 3)
-            assert("Block length is invalid");
+        assert(state.size() == 3);
 
         vector<uint16_t> tmp = state;
 
