@@ -4,6 +4,7 @@
 #include <aes/aes.h>
 #include <helper/helper.h>
 
+#include <map>
 #include <vector>
 
 class DiffWay {
@@ -12,12 +13,12 @@ class DiffWay {
 
   public:
     DiffWay();
-    void checkMiddle(std::vector<std::vector<uint16_t>> &all_dW3,
-                     std::vector<std::vector<uint16_t>> &all_dX3);
+    void checkMiddle(std::map<uint16_t, std::vector<std::vector<uint16_t>>> &all_W2_dW3,
+                     std::map<uint16_t, std::vector<std::vector<uint16_t>>> &all_Y4_dX3);
 
-    void directDifferential(std::vector<std::vector<uint16_t>> &all_dW3);
+    void directDifferential(std::map<uint16_t, std::vector<std::vector<uint16_t>>> &all_W2_dW3);
 
-    void reverseDifferential(std::vector<std::vector<uint16_t>> &all_dX3);
+    void reverseDifferential(std::map<uint16_t, std::vector<std::vector<uint16_t>>> &all_Y4_dX3);
 
     void precomputeSboxDiff();
 };

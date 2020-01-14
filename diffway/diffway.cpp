@@ -17,10 +17,9 @@ uint8_t S_Box[16] = {0x07, 0x06, 0x00, 0x0E,  //
 
 DiffWay::DiffWay() {}
 
-void DiffWay::directDifferential(vector<vector<uint16_t>> &all_dW3) {
+void DiffWay::directDifferential(std::map<uint16_t, std::vector<std::vector<uint16_t>>> &all_W2_dW3) {
     Timer timer("DiffWay_Direct   ");
-    static int counter = 0;
-    vector<uint16_t> tail(3, 0x000);
+
     for (uint8_t dY1_0 = 0x01; dY1_0 < 0x10; ++dY1_0) {
 
         uint16_t dY1;
@@ -56,16 +55,17 @@ void DiffWay::directDifferential(vector<vector<uint16_t>> &all_dW3) {
             dW3.push_back(precompute_MixColumns[dX2 & 0x00F]);
             dW3.push_back(precompute_MixColumns[dX2 & 0x0F0]);
 
-            all_dW3[counter] = dW3;
-            ++counter;
+            if (all_W2_dW3[W2].size() == 0)
+                all_W2_dW3[W2] = vector<vector<uint16_t>>(1, dW3);
+            else
+                all_W2_dW3[W2].push_back(dW3);
         }
     }
 }
 
-void DiffWay::reverseDifferential(std::vector<std::vector<uint16_t>> &all_dX3) {
+void DiffWay::reverseDifferential(std::map<uint16_t, std::vector<std::vector<uint16_t>>> &all_Y4_dX3) {
     Timer timer("DiffWay_Reverse  ");
-    static int counter = 0;
-    vector<uint16_t> tail(3, 0x000);
+
     for (uint8_t dZ4_0 = 0x01; dZ4_0 < 0x10; ++dZ4_0) {
 
         uint16_t dZ4;
@@ -103,13 +103,16 @@ void DiffWay::reverseDifferential(std::vector<std::vector<uint16_t>> &all_dX3) {
             dX3 = dY3;
             AES<uint4_t>::InvShiftRows(dX3);
 
-            all_dX3[counter] = dX3;
-            ++counter;
+            if (all_Y4_dX3[Y4].size() == 0)
+                all_Y4_dX3[Y4] = vector<vector<uint16_t>>(1, dX3);
+            else
+                all_Y4_dX3[Y4].push_back(dX3);
         }
     }
 }
 
-void DiffWay::checkMiddle(vector<vector<uint16_t>> &all_dW3, vector<vector<uint16_t>> &all_dX3) {
+void DiffWay::checkMiddle(std::map<uint16_t, std::vector<std::vector<uint16_t>>> &all_W2_dW3,
+                          std::map<uint16_t, std::vector<std::vector<uint16_t>>> &all_Y4_dX3) {
     Timer timer("CheckMiddle      ");
 
     vector<uint64_t> tmpl;
@@ -177,20 +180,39 @@ void DiffWay::precomputeSboxDiff() {
         }
         SboxDiff.push_back(dWi);
     }
-}
 
-TEST(DiffWay, PrecomputeSboxDiff) {
-    DiffWay dw;
-    dw.precomputeSboxDiff();
+    //  for (uint8_t i = 0; i < 0x10; i++) {
+    // std::cout << std::hex << (uint32_t)i << "/";
+    //  }
+    //  printf("\n");
+
+    //  for (int i = 0; i < SboxDiff.size(); i++) {
+    //      for (int j = 0; j < SboxDiff[i].size(); j++) {
+    //          std::cout << std::hex << SboxDiff[i][j].size() << "/";
+    //      }
+    //      printf("\n");
+    //  }
 }
 
 TEST(DiffWay, CheckMiddle) {
     DiffWay dw;
-    vector<uint16_t> templ(3, 0x0000);
-    vector<vector<uint16_t>> all_dW3(61440, templ);
-    vector<vector<uint16_t>> all_dX3(61440, templ);
-    dw.directDifferential(all_dW3);
-    dw.reverseDifferential(all_dX3);
+
+    std::map<uint16_t, std::vector<std::vector<uint16_t>>> all_W2_dW3;
+    std::map<uint16_t, std::vector<std::vector<uint16_t>>> all_Y4_dX3;
+    dw.directDifferential(all_W2_dW3);
+    dw.reverseDifferential(all_Y4_dX3);
+    int count = 0;
+    // for (auto vec_vec = all_W2_dW3.begin(); vec_vec != all_W2_dW3.end(); ++vec_vec) {
+    //    ++count;
+    //    for (auto vec = (*vec_vec).second.begin(); vec != (*vec_vec).second.end(); ++vec) {
+    //        std::cout << std::hex << std::setfill('0') << std::setw(4) << (*vec_vec).first << "////";
+    //        for (int i = 0; i < 3; i++) {
+    //            std::cout << " " << std::hex << std::setfill('0') << std::setw(4) << (*vec)[i];
+    //        }
+    //        std::cout << std::endl;
+    //    }
+    //}
     dw.precomputeSboxDiff();
-    dw.checkMiddle(all_dW3, all_dX3);
+
+    // dw.checkMiddle(all_dW3, all_dX3);
 }
