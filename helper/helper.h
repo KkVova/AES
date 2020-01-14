@@ -130,7 +130,7 @@ uint8_t gmul(uint8_t a, uint8_t b);
 
 uint4_t gmul(uint4_t a, uint4_t b);
 
-template <typename TYPE> void PrintState(std::vector<TYPE> &state, bool isString = false) {
+template <typename TYPE> void PrintState(const std::vector<TYPE> &state, bool isString = false) {
 
     if (isString) {
         for (int i = 0; i < state.size(); ++i)

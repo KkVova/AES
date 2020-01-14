@@ -111,58 +111,148 @@ void DiffWay::reverseDifferential(std::map<uint16_t, std::vector<std::vector<uin
     }
 }
 
-void DiffWay::checkMiddle(std::map<uint16_t, std::vector<std::vector<uint16_t>>> &all_W2_dW3,
-                          std::map<uint16_t, std::vector<std::vector<uint16_t>>> &all_Y4_dX3) {
+void DiffWay::checkMiddle(const std::map<uint16_t, std::vector<std::vector<uint16_t>>> &all_W2_dW3,
+                          const std::map<uint16_t, std::vector<std::vector<uint16_t>>> &all_Y4_dX3,
+                          vector<std::tuple<uint16_t, uint64_t, uint16_t>> &ALL_W2_W3_Y4) {
     Timer timer("CheckMiddle      ");
-
     vector<uint64_t> tmpl;
-    vector<uint64_t> ALL_W;
 
-    for (auto dWit = all_dW3.begin(); (dWit - all_dW3.begin()) < 1024; dWit++) {
-        // for (auto dWit = all_dW3.begin(); dWit != all_dW3.end(); dWit++) {
-        // std::cout << dWit - all_dW3.begin() << std::endl;
-        for (auto dXit = all_dX3.begin(); (dXit - all_dX3.begin()) < 1024; dXit++) {
-            // for (auto dXit = all_dX3.begin(); dXit != all_dX3.end(); dXit++) {
+    uint32_t W2_dW3sCounter = 0;
+    uint32_t Y4_dX3sCounter = 0;
 
-            vector<vector<uint64_t>> W_table(9, tmpl);
-            for (int i = 0; i < 9; i++) {
-                uint8_t dWi = ((*dWit)[i / 3] >> (((i % 3) * (-4)) + 8)) & 0x0F;
-                uint8_t dXi = ((*dXit)[i / 3] >> (((i % 3) * (-4)) + 8)) & 0x0F;
+    uint32_t counter = 0;
+    for (auto W2_dW3s = all_W2_dW3.begin(); /* W2_dW3s != all_W2_dW3.end()*/ W2_dW3sCounter < 64;
+         ++W2_dW3s, ++W2_dW3sCounter) {
 
-                if (SboxDiff[dWi][dXi].size() == 0) {
-                    W_table.clear();
-                    break;
+        for (auto dWit = (*W2_dW3s).second.begin(); dWit != (*W2_dW3s).second.end(); ++dWit) {
+            Y4_dX3sCounter = 0;
+            // printf("%d\n", counter++);
+            for (auto Y4_dX3s = all_Y4_dX3.begin(); /*Y4_dX3s != all_Y4_dX3.end()*/ Y4_dX3sCounter < 64;
+                 ++Y4_dX3s, ++Y4_dX3sCounter) {
+
+                for (auto dXit = (*Y4_dX3s).second.begin(); dXit != (*Y4_dX3s).second.end(); ++dXit) {
+                    vector<vector<uint64_t>> W_table(9, tmpl);
+                    for (int i = 0; i < 9; i++) {
+                        uint8_t dWi = ((*dWit)[i / 3] >> (((i % 3) * (-4)) + 8)) & 0x0F;
+                        uint8_t dXi = ((*dXit)[i / 3] >> (((i % 3) * (-4)) + 8)) & 0x0F;
+
+                        if (SboxDiff[dWi][dXi].size() == 0) {
+                            W_table.clear();
+                            break;
+                        }
+                        for (int j = 0; j < SboxDiff[dWi][dXi].size(); ++j)
+                            W_table[i].push_back(SboxDiff[dWi][dXi][j]);
+                    }
+
+                    if (W_table.empty())
+                        continue;
+
+                    for (int a = 0; a < W_table[0].size(); ++a)
+                        for (int b = 0; b < W_table[1].size(); ++b)
+                            for (int c = 0; c < W_table[2].size(); ++c)
+                                for (int d = 0; d < W_table[3].size(); ++d)
+                                    for (int e = 0; e < W_table[4].size(); ++e)
+                                        for (int f = 0; f < W_table[5].size(); ++f)
+                                            for (int g = 0; g < W_table[6].size(); ++g)
+                                                for (int h = 0; h < W_table[7].size(); ++h)
+                                                    for (int i = 0; i < W_table[8].size(); ++i) {
+                                                        uint64_t aggreagate =
+                                                            (uint64_t)W_table[0][a] << 32 |
+                                                            (uint64_t)W_table[1][b] << 28 |
+                                                            (uint64_t)W_table[2][c] << 24 |
+                                                            (uint64_t)W_table[3][d] << 20 |
+                                                            (uint64_t)W_table[4][e] << 16 |
+                                                            (uint64_t)W_table[5][f] << 12 |
+                                                            (uint64_t)W_table[6][g] << 8 |
+                                                            (uint64_t)W_table[7][h] << 4 |
+                                                            (uint64_t)W_table[8][i];
+
+                                                        ALL_W2_W3_Y4.push_back(
+                                                            std::make_tuple((*W2_dW3s).first, aggreagate,
+                                                                            (*Y4_dX3s).first));
+                                                    }
                 }
-                for (int j = 0; j < SboxDiff[dWi][dXi].size(); ++j)
-                    W_table[i].push_back(SboxDiff[dWi][dXi][j]);
             }
-
-            if (W_table.empty())
-                continue;
-
-            for (int a = 0; a < W_table[0].size(); ++a)
-                for (int b = 0; b < W_table[1].size(); ++b)
-                    for (int c = 0; c < W_table[2].size(); ++c)
-                        for (int d = 0; d < W_table[3].size(); ++d)
-                            for (int e = 0; e < W_table[4].size(); ++e)
-                                for (int f = 0; f < W_table[5].size(); ++f)
-                                    for (int g = 0; g < W_table[6].size(); ++g)
-                                        for (int h = 0; h < W_table[7].size(); ++h)
-                                            for (int i = 0; i < W_table[8].size(); ++i) {
-                                                uint64_t aggreagate = (uint64_t)W_table[0][a] << 32 |
-                                                                      (uint64_t)W_table[1][b] << 28 |
-                                                                      (uint64_t)W_table[2][c] << 24 |
-                                                                      (uint64_t)W_table[3][d] << 20 |
-                                                                      (uint64_t)W_table[4][e] << 16 |
-                                                                      (uint64_t)W_table[5][f] << 12 |
-                                                                      (uint64_t)W_table[6][g] << 8 |
-                                                                      (uint64_t)W_table[7][h] << 4 |
-                                                                      (uint64_t)W_table[8][i];
-
-                                                ALL_W.push_back(aggreagate);
-                                            }
         }
     }
+}
+
+void DiffWay::multidimensionalDiff(
+    const std::vector<std::tuple<uint16_t, uint64_t, uint16_t>> &ALL_W2_W3_Y4,
+    std::vector<Pair> &ALL_W5_0) {
+    Timer timer("MultidimDiff     ");
+
+    for (auto it = ALL_W2_W3_Y4.begin(); it != ALL_W2_W3_Y4.end(); ++it) {
+        vector<uint8_t> sW5_0;
+        uint64_t agg = 0;
+
+        uint16_t W2;
+        uint64_t W3;
+        uint16_t Y4;
+        std::tie(W2, W3, Y4) = *it;
+
+        uint16_t X2 = precompute_SubBytes[W2];
+        vector<uint16_t> X3;
+        X3.push_back(precompute_SubBytes[(W3 >> 24) & 0x0FFF]);
+        X3.push_back(precompute_SubBytes[(W3 >> 12) & 0x0FFF]);
+        X3.push_back(precompute_SubBytes[(W3)&0x0FFF]);
+        for (uint8_t sY1_0 = 1; sY1_0 < 0x10; ++sY1_0) {
+            uint16_t sW2 = precompute_MixColumns[sY1_0];
+            uint16_t sX2 = X2 ^ precompute_SubBytes[W2 ^ sW2];
+            vector<uint16_t> sY2 = AES<uint8_t>::ShiftRows(sX2);
+            vector<uint16_t> sW3;
+            vector<uint16_t> sX3;
+            vector<uint16_t> sY3;
+            vector<uint16_t> sW4;
+            uint16_t W4;
+            uint16_t tmp_sW4;
+            uint16_t sY4;
+            uint16_t sW5;
+            for (int i = 0; i < 3; i++)
+                sW3.push_back(precompute_MixColumns[sY2[i]]);
+
+            for (int i = 0; i < 3; i++)
+                sX3.push_back(X3[i] ^
+                              precompute_SubBytes[(uint16_t)((W3 >> (24 - i * 12)) & 0x0FFF) ^ sW3[i]]);
+
+            sY3 = sX3;
+
+            AES<uint8_t>::ShiftRows(sY3);
+            for (int i = 0; i < 3; i++)
+                sW4.push_back(precompute_MixColumns[sY3[i]]);
+
+            W4 = precompute_InvSubBytes[Y4];
+            tmp_sW4 = (sW4[0] & 0x0F00) | (sW4[1] & 0x00F0) | (sW4[2] & 0x000F);
+
+            sY4 = Y4 ^ precompute_SubBytes[W4 ^ tmp_sW4];
+
+            sW5 = precompute_MixColumns[sY4];
+            sW5_0.push_back(sW5);
+        }
+
+        for (int i = 0; i < 15; ++i) {
+            agg = (agg << 4 * i) | ((sW5_0[i] >> 8) & 0x000F);
+        }
+        ALL_W5_0.push_back(MSET::makePair(agg));
+    }
+}
+
+void DiffWay::onlinePhase() {
+    vector<std::tuple<uint8_t, uint8_t, uint16_t>> all_W5_dW5_dW6;
+    for (uint8_t dW5_0 = 0x00; dW5_0 < 0x10; dW5_0++)
+        for (uint8_t W5_0 = 0x00; W5_0 < 0x10; W5_0++) {
+
+            uint16_t dY5;
+            uint16_t dZ5;
+            uint16_t dW6;
+
+            dY5 = S_Box[W5_0] ^ S_Box[(W5_0 ^ dW5_0)];
+            // 00* -> *00
+            dY5 = dY5 << 8;
+
+            dW6 = precompute_MixColumns[dY5];
+            all_W5_dW5_dW6.push_back(std::make_tuple(W5_0, dW5_0, dW6));
+        }
 }
 
 void DiffWay::precomputeSboxDiff() {
@@ -194,16 +284,20 @@ void DiffWay::precomputeSboxDiff() {
     //  }
 }
 
-TEST(DiffWay, CheckMiddle) {
+TEST(DiffWay, multidimensionalDiff) {
     DiffWay dw;
 
     std::map<uint16_t, std::vector<std::vector<uint16_t>>> all_W2_dW3;
     std::map<uint16_t, std::vector<std::vector<uint16_t>>> all_Y4_dX3;
+    vector<std::tuple<uint16_t, uint64_t, uint16_t>> ALL_W2_W3_Y4;
+    std::vector<Pair> ALL_W5_0;
+
     dw.directDifferential(all_W2_dW3);
     dw.reverseDifferential(all_Y4_dX3);
-    int count = 0;
+
+    // uint32_t counter = 0;
     // for (auto vec_vec = all_W2_dW3.begin(); vec_vec != all_W2_dW3.end(); ++vec_vec) {
-    //    ++count;
+    //    counter += (*vec_vec).second.size();
     //    for (auto vec = (*vec_vec).second.begin(); vec != (*vec_vec).second.end(); ++vec) {
     //        std::cout << std::hex << std::setfill('0') << std::setw(4) << (*vec_vec).first << "////";
     //        for (int i = 0; i < 3; i++) {
@@ -212,7 +306,18 @@ TEST(DiffWay, CheckMiddle) {
     //        std::cout << std::endl;
     //    }
     //}
-    dw.precomputeSboxDiff();
+    // printf("%d\n", counter);
 
-    // dw.checkMiddle(all_dW3, all_dX3);
+    dw.precomputeSboxDiff();
+    dw.checkMiddle(all_W2_dW3, all_Y4_dX3, ALL_W2_W3_Y4);
+    printf("ALL - %d\n", ALL_W2_W3_Y4.size());
+
+    dw.multidimensionalDiff(ALL_W2_W3_Y4, ALL_W5_0);
+    std::cout << ALL_W5_0.size() << std::endl;
+
+    // for (auto it = ALL_W2_W3_Y4.begin(); it != ALL_W2_W3_Y4.end(); ++it) {
+    //    if (std::get<0>(*it) == 0x00 || std::get<1>(*it) == 0x00 || std::get<2>(*it) == 0x00)
+    //        std::cout << std::hex << std::get<0>(*it) << " / " << std::get<1>(*it) << " / "
+    //                  << std::get<2>(*it) << std::endl;
+    //}
 }

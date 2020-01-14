@@ -88,7 +88,7 @@ void AES<TYPE>::InitAES(vector<TYPE> &key, vector<TYPE> &keySchedule, bool isEnc
 
 template <typename TYPE>
 void AES<TYPE>::KeySchedule(vector<TYPE> &prevKey, vector<TYPE> &nextKey, const uint8_t &roundNum) {
-    // printf("KeySchedule\n");
+    // printf("\nKeySchedule\n");
     vector<TYPE> tmp = prevKey;
 
     if (prevKey.size() == 16) {
@@ -114,8 +114,7 @@ void AES<TYPE>::KeySchedule(vector<TYPE> &prevKey, vector<TYPE> &nextKey, const 
             tmp[i] = tmp[i - 3] ^ prevKey[i];
     }
     nextKey = tmp;
-    // printf("Current key state\n");
-    // PrintState(nextKey);
+    // PrintState(nextKey, true);
 }
 
 template <typename TYPE>
@@ -130,29 +129,18 @@ void AES<TYPE>::Encrypt(const vector<TYPE> &data, vector<TYPE> &key, vector<TYPE
     vector<TYPE> currentKey;
     vector<TYPE> state = data;
 
-    // printf("input key\n");
-    // PrintState(key);
     InitAES(key, keySchedule, true, numberOfRounds);
     currentKey = GetKeyState(keySchedule, 0, stateSize);
-    // PrintState(state);
-    // printf("Current key state\n");
-    // PrintState(currentKey);
+
     AddRoundKey(state, currentKey);
     for (int i = 1; i < numberOfRounds; i++) {
         currentKey = GetKeyState(keySchedule, i, stateSize);
-        // printf("Round %d\n", i);
         Round(state, currentKey);
-        // printf("Current key state\n");
-        // PrintState(currentKey);
     }
     currentKey = GetKeyState(keySchedule, numberOfRounds, stateSize);
-    // printf("Current key state\n");
-    // PrintState(currentKey);
     FinalRound(state, currentKey);
 
     encryptedMessage = state;
-    // printf("EncryptedMessage\n");
-    // PrintState(encryptedMessage);
 }
 
 template <typename TYPE>
@@ -171,8 +159,8 @@ void AES<TYPE>::Decrypt(const vector<TYPE> &encryptedData, vector<TYPE> &key, ve
     // PrintState(key);
     InitAES(key, keySchedule, false, numberOfRounds);
     currentKey = GetKeyState(keySchedule, 0, stateSize);
-    // PrintState(state);
-    // printf("Current key state\n");
+    // PrintState(state, true);
+    // printf("\nCurrent key state\n");
     // PrintState(currentKey);
     AddRoundKey(state, currentKey);
     for (int i = 1; i < numberOfRounds; i++) {
@@ -180,16 +168,16 @@ void AES<TYPE>::Decrypt(const vector<TYPE> &encryptedData, vector<TYPE> &key, ve
         // printf("Round %d\n", i);
         InvRound(state, currentKey);
         // printf("Current key state\n");
-        // PrintState(currentKey);
+        // // PrintState(currentKey);
     }
     currentKey = GetKeyState(keySchedule, numberOfRounds, stateSize);
     // printf("Current key state\n");
-    // PrintState(currentKey);
+    // // PrintState(currentKey);
     InvFinalRound(state, currentKey);
 
     message = state;
     // printf("EncryptedMessage\n");
-    // PrintState(encryptedMessage);
+    // // PrintState(encryptedMessage);
 }
 
 template <typename TYPE> void AES<TYPE>::Round(vector<TYPE> &state, vector<TYPE> &key) {
@@ -219,14 +207,14 @@ template <typename TYPE> void AES<TYPE>::InvFinalRound(vector<TYPE> &state, vect
 }
 
 template <typename TYPE> void AES<TYPE>::AddRoundKey(vector<TYPE> &state, vector<TYPE> &roundKey) {
-    // printf("AddRoundKey\n");
+    // printf("\nAddRoundKey\n");
     for (int i = 0; i < state.size(); i++)
         state[i] = state[i] ^ roundKey[i];
-    // PrintState(state);
+    // PrintState(state, true);
 }
 
 template <typename TYPE> void AES<TYPE>::SubBytes(vector<TYPE> &state) {
-    // printf("SubBytes\n");
+    // printf("\nSubBytes\n");
     if (state.size() == 16) {
         for (int i = 0; i < state.size(); ++i)
             state[i] = S_Byte[(uint8_t)state[i]];
@@ -241,12 +229,13 @@ template <typename TYPE> void AES<TYPE>::SubBytes(vector<TYPE> &state) {
                 state[i + 1] = uint8_t(aggregateState >> 4);
                 state[i + 2] = uint8_t(aggregateState);
             }
+            // PrintState(state, true);
             return;
         }
         for (int i = 0; i < state.size(); ++i)
             state[i] = S_HalfByte[(uint8_t)state[i]];
     }
-    // PrintState(state);
+    // PrintState(state, true);
 }
 
 template <typename TYPE> void AES<TYPE>::InvSubBytes(vector<TYPE> &state) {
@@ -270,11 +259,11 @@ template <typename TYPE> void AES<TYPE>::InvSubBytes(vector<TYPE> &state) {
         for (int i = 0; i < state.size(); ++i)
             state[i] = inv_S_HalfByte[(uint8_t)state[i]];
     }
-    // PrintState(state);
+    // PrintState(state, true);
 }
 
 template <typename TYPE> void AES<TYPE>::ShiftRows(vector<TYPE> &state) {
-    // printf("ShiftRows\n");
+    // printf("\nShiftRows\n");
     vector<TYPE> tmp = state;
 
     if (state.size() == 16) {
@@ -306,7 +295,7 @@ template <typename TYPE> void AES<TYPE>::ShiftRows(vector<TYPE> &state) {
         tmp[8] = state[5];
     }
     state = tmp;
-    // PrintState(state);
+    // PrintState(state, true);
 }
 
 template <typename TYPE> void AES<TYPE>::InvShiftRows(vector<TYPE> &state) {
@@ -342,11 +331,11 @@ template <typename TYPE> void AES<TYPE>::InvShiftRows(vector<TYPE> &state) {
         tmp[8] = state[2];
     }
     state = tmp;
-    // PrintState(state);
+    // PrintState(state, true);
 }
 
 template <typename TYPE> void AES<TYPE>::MixColumns(vector<TYPE> &state) {
-    // printf("MixColumns\n");
+    // printf("\nMixColumns\n");
     vector<TYPE> tmp = state;
 
     if (state.size() == 16) {
@@ -378,6 +367,7 @@ template <typename TYPE> void AES<TYPE>::MixColumns(vector<TYPE> &state) {
                 state[i + 1] = uint8_t(aggregateState >> 4);
                 state[i + 2] = uint8_t(aggregateState);
             }
+            // PrintState(state, true);
             return;
         }
 
@@ -397,7 +387,7 @@ template <typename TYPE> void AES<TYPE>::MixColumns(vector<TYPE> &state) {
     }
 
     state = tmp;
-    // PrintState(state);
+    // PrintState(state, true);
 }
 
 template <typename TYPE> void AES<TYPE>::InvMixColumns(vector<TYPE> &state) {
@@ -452,7 +442,7 @@ template <typename TYPE> void AES<TYPE>::InvMixColumns(vector<TYPE> &state) {
     }
 
     state = tmp;
-    // PrintState(state);
+    // PrintState(state, true);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -485,9 +475,9 @@ template <typename TYPE> bool AES<TYPE>::Test_Tetha_MixColumns(const int size) {
                     if (teta < 4) {
                         // printf("teta = %d\n", teta);
                         // printf("state\n");
-                        // PrintState(state);
+                        // // PrintState(state);
                         // printf("encryptedState\n");
-                        // PrintState(encryptedState);
+                        // // PrintState(encryptedState);
                         return false;
                     }
                 }
@@ -517,9 +507,9 @@ template <typename TYPE> bool AES<TYPE>::Test_Tetha_MixColumns(const int size) {
                         if (teta < 5) {
                             // printf("%d\n", teta);
                             // printf("state\n");
-                            // PrintState(state);
+                            // // PrintState(state);
                             // printf("encryptedState\n");
-                            // PrintState(encryptedState);
+                            // // PrintState(encryptedState);
                             return false;
                         }
                     }
@@ -800,12 +790,12 @@ template <typename TYPE> void AES<TYPE>::Precompute_MixColumns_And_InvMixColumns
                 state.insert(state.end(), tail.begin(), tail.end());
                 uint32_t aggregateState =
                     ((uint32_t)state[0] << 8) ^ ((uint32_t)state[1] << 4) ^ (uint32_t)state[2];
-                //                PrintState(state);
+                //                // PrintState(state);
                 //                PRINTHEX(aggregateState);
                 //                printf("\n");
 
                 MixColumns(state);
-                //                PrintState(state);
+                //                // PrintState(state);
                 uint32_t aggregateResult =
                     ((uint32_t)state[0] << 8) ^ ((uint32_t)state[1] << 4) ^ (uint32_t)state[2];
                 if (aggregateState % 8 == 0)
@@ -826,12 +816,12 @@ template <typename TYPE> void AES<TYPE>::Precompute_MixColumns_And_InvMixColumns
                 state.insert(state.end(), tail.begin(), tail.end());
                 uint32_t aggregateState =
                     ((uint32_t)state[0] << 8) ^ ((uint32_t)state[1] << 4) ^ (uint32_t)state[2];
-                //                PrintState(state);
+                //                // PrintState(state);
                 //                PRINTHEX(aggregateState);
                 //                printf("\n");
 
                 InvMixColumns(state);
-                //                PrintState(state);
+                //                // PrintState(state);
                 uint32_t aggregateResult =
                     ((uint32_t)state[0] << 8) ^ ((uint32_t)state[1] << 4) ^ (uint32_t)state[2];
                 if (aggregateState % 8 == 0)
@@ -857,12 +847,12 @@ template <typename TYPE> void AES<TYPE>::Precompute_Sbox_And_InvSbox(const int s
                 state.insert(state.end(), tail.begin(), tail.end());
                 uint32_t aggregateState =
                     ((uint32_t)state[0] << 8) ^ ((uint32_t)state[1] << 4) ^ (uint32_t)state[2];
-                //                PrintState(state);
+                //                // PrintState(state);
                 //                PRINTHEX(aggregateState);
                 //                printf("\n");
 
                 SubBytes(state);
-                //                PrintState(state);
+                //                // PrintState(state);
                 uint32_t aggregateResult =
                     ((uint32_t)state[0] << 8) ^ ((uint32_t)state[1] << 4) ^ (uint32_t)state[2];
                 if (aggregateState % 8 == 0)
@@ -883,12 +873,12 @@ template <typename TYPE> void AES<TYPE>::Precompute_Sbox_And_InvSbox(const int s
                 state.insert(state.end(), tail.begin(), tail.end());
                 uint32_t aggregateState =
                     ((uint32_t)state[0] << 8) ^ ((uint32_t)state[1] << 4) ^ (uint32_t)state[2];
-                //                PrintState(state);
+                //                // PrintState(state);
                 //                PRINTHEX(aggregateState);
                 //                printf("\n");
 
                 InvSubBytes(state);
-                //                PrintState(state);
+                //                // PrintState(state);
                 uint32_t aggregateResult =
                     ((uint32_t)state[0] << 8) ^ ((uint32_t)state[1] << 4) ^ (uint32_t)state[2];
                 if (aggregateState % 8 == 0)
@@ -1001,6 +991,130 @@ TEST(AES, SpeedTest_3x3_HalfByte) {
         aes.Decrypt(encryptedData_fast, key, decryptedData_fast, 5, true);
     }
     EXPECT_EQ(decryptedData_fast, data_fast);
+}
+
+TEST(AES, SpeedTest_1_Min) {
+    srand(time(0));
+    vector<uint16_t> data;
+    vector<uint16_t> key;
+
+    for (int i = 0; i < 3; ++i) {
+        data.push_back(rand() % 0x1000);
+    }
+    for (int i = 0; i < 3; ++i) {
+        key.push_back(rand() % 0x1000);
+    }
+
+    vector<vector<uint16_t>> roundKeys;
+    AES<uint8_t>::KeySchedule(key, roundKeys, 6);
+
+    {
+        Timer timer("SpeedTest: 120.000.000 Fast Encrypt");
+
+        for (int i = 0; i < 120000000; i++) {
+            vector<uint16_t> encryptedData;
+            AES<uint8_t>::Encrypt(data, roundKeys, encryptedData, 6);
+        }
+    }
+}
+
+TEST(AES, Positive_Equals_uint16_uint4) {
+    srand(time(0));
+    AES<uint4_t> aes;
+    vector<uint4_t> data;
+    vector<uint4_t> key;
+    vector<uint4_t> encryptedData;
+
+    vector<uint16_t> data16;
+    vector<uint16_t> key16;
+    vector<uint16_t> encryptedData16;
+    vector<uint16_t> checkResult;
+
+    for (int i = 0; i < 9; ++i)
+        data.push_back(rand() % 0x1000);
+
+    for (int i = 0; i < 9; ++i)
+        key.push_back(rand() % 0x1000);
+
+    for (int i = 0; i < 9; i += 3)
+        data16.push_back(((uint16_t)data[i] << 8) | ((uint16_t)data[i + 1] << 4) |
+                         (uint16_t)data[i + 2]);
+
+    for (int i = 0; i < 9; i += 3)
+        key16.push_back(((uint16_t)key[i] << 8) | ((uint16_t)key[i + 1] << 4) | (uint16_t)key[i + 2]);
+
+    aes.Encrypt(data, key, encryptedData, 6);
+    vector<vector<uint16_t>> roundKeys;
+    AES<uint8_t>::KeySchedule(key16, roundKeys, 6);
+    AES<uint8_t>::Encrypt(data16, roundKeys, encryptedData16, 6);
+
+    for (int i = 0; i < 9; i += 3)
+        checkResult.push_back(((uint16_t)encryptedData[i] << 8) | ((uint16_t)encryptedData[i + 1] << 4) |
+                              (uint16_t)encryptedData[i + 2]);
+
+    EXPECT_EQ(checkResult, encryptedData16);
+}
+
+TEST(AES, Find_P) {
+    srand(time(0));
+
+    vector<uint16_t> key;
+    for (int i = 0; i < 3; ++i) {
+        key.push_back(rand() % 0x1000);
+    }
+
+    vector<vector<uint16_t>> roundKeys;
+    AES<uint8_t>::KeySchedule(key, roundKeys, 6);
+
+    for (uint16_t Pfirst = 0x0000; Pfirst < 0x0100; ++Pfirst) {
+        std::cout << std::hex << Pfirst << std::endl;
+        for (uint16_t Psecond = 0x0000; Psecond < 0x1000; ++Psecond) {
+            for (uint16_t Pthird = 0x0000; Pthird < 0x1000; ++Pthird) {
+                vector<vector<uint16_t>> all_P;
+                vector<vector<uint16_t>> all_C;
+                vector<uint16_t> P;
+
+                P.push_back(Pfirst);
+                P.push_back(Psecond);
+                P.push_back(Pthird);
+
+                for (uint8_t i = 0; i < 0x10; ++i) {
+                    vector<uint16_t> Ci;
+                    vector<uint16_t> Pi = P;
+
+                    Pi[0] = Pi[0] ^ ((uint16_t)i << 8);
+
+                    AES<uint8_t>::Encrypt(Pi, roundKeys, Ci, 6);
+                    all_P.push_back(Pi);
+                    all_C.push_back(Ci);
+                }
+
+                for (auto first = all_C.begin(); first != all_C.end() - 1; ++first)
+                    for (auto second = first + 1; second != all_C.end(); ++second) {
+                        if ((((*first)[0] & 0x0F00) != ((*second)[0] & 0x0F00)) &&
+                            (((*first)[0] & 0x00FF) == ((*second)[0] & 0x00FF)) &&
+                            (((*first)[1] & 0x000F) != ((*second)[1] & 0x000F)) &&
+                            (((*first)[1] & 0x0FF0) == ((*second)[1] & 0x0FF0)) &&
+                            (((*first)[2] & 0x00F0) != ((*second)[2] & 0x00F0)) &&
+                            (((*first)[2] & 0x0F0F) == ((*second)[2] & 0x0F0F))) {
+                            for (auto it = all_P.begin(); it != all_P.end(); ++it) {
+                                PrintState((*it), true);
+                                printf("\n");
+                            }
+                            printf("\n////////////////////////////\n");
+                            for (auto it = all_C.begin(); it != all_C.end(); ++it) {
+                                PrintState((*it), true);
+                                printf("\n");
+                            }
+                            printf("\n000000000000000000000000000000000000000000\n");
+                            PrintState(key, true);
+                            printf("\n=====================\n");
+                            return;
+                        }
+                    }
+            }
+        }
+    }
 }
 
 TEST(AES, Test_Tetha_MixColumns_3x3_HalfByte) {
